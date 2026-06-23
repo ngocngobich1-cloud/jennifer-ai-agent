@@ -88,25 +88,25 @@ Luôn kết thúc bằng một câu hỏi để giữ mạch trò chuyện.
 `;
 
   const response = await axios.post(
-    "https://integrate.api.nvidia.com/v1/chat/completions",
-    {
-      model: NVIDIA_MODEL,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userText }
-      ],
-      temperature: 0.7,
-      max_tokens: 300
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${NVIDIA_API_KEY}`,
-        "Content-Type": "application/json"
-      }
+  "https://api.openai.com/v1/chat/completions",
+  {
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userText }
+    ],
+    temperature: 0.7,
+    max_tokens: 300
+  },
+  {
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      "Content-Type": "application/json"
     }
-  );
+  }
+);
 
-  return response.data.choices?.[0]?.message?.content || "Em da nhan duoc tin nhan a.";
+return response.data.choices?.[0]?.message?.content || "Em đã nhận được tin nhắn ạ.";
 }
 
 async function sendMessage(recipientId, text) {
