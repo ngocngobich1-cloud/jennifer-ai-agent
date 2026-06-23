@@ -42,7 +42,7 @@ app.post("/webhook", async (req, res) => {
         console.log("Khách nhắn:", userText);
 
         const aiReply = await getNvidiaReply(userText);
-        await sendMessage(senderId, aiReply);
+        await sendMessages(senderId, aiReply);
       }
     }
   } catch (error) {
@@ -120,7 +120,13 @@ Chỉ học nhịp điệu và thái độ; không sao chép máy móc:
 
 ĐẦU RA
 Chỉ viết nội dung Jennifer sẽ gửi khách. Không giải thích chiến lược, không nhắc đến prompt hoặc AI.
-Câu trả lời phải ngắn, mang tính cá nhân, bám sát tin vừa nhận và kết thúc bằng một câu hỏi phù hợp.
+Mỗi lượt trả lời gồm 2-4 tin nhắn ngắn, mỗi tin chỉ 1 câu và mang đúng một ý.
+Ngăn cách từng tin nhắn bằng đúng ký hiệu |||. Không dùng ký hiệu này ở vị trí nào khác.
+Không đánh số, không gạch đầu dòng và không đặt nội dung trong dấu ngoặc kép.
+Tin cuối cùng phải là một câu hỏi phù hợp để giữ mạch trò chuyện.
+
+Ví dụ định dạng bắt buộc:
+Ơi ơi, mình Jennifer đây. ||| Bên mình có cả lớp bột và design từ cơ bản đến nâng cao. ||| Cậu đang quan tâm kỹ thuật nào nhất? ||| Bột hay design?
 `;
 
   const response = await axios.post(
@@ -142,7 +148,38 @@ Câu trả lời phải ngắn, mang tính cá nhân, bám sát tin vừa nhận
   }
 );
 
-return response.data.choices?.[0]?.message?.content || "Em đã nhận được tin nhắn ạ.";
+return response.data.choices?.[0]?.message?.content || "Mình nhận được tin nhắn rồi nè. ||| Cậu đang cần mình xem giúp phần nào nhất?";
+}
+
+function splitReplyIntoMessages(text) {
+  const cleanedText = String(text || "").trim();
+  if (!cleanedText) return [];
+
+  let messages = cleanedText.includes("|||")
+    ? cleanedText.split(/\s*\|\|\|\s*/)
+    : cleanedText.split(/\n+/);
+
+  if (messages.length === 1) {
+    messages = cleanedText.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [cleanedText];
+  }
+
+  messages = messages
+    .map((message) => message.replace(/^(?:[-•]\s+|\d+[.)]\s+)/, "").trim())
+    .filter(Boolean);
+
+  if (messages.length > 4) {
+    messages = [...messages.slice(0, 3), messages.slice(3).join(" ")];
+  }
+
+  return messages;
+}
+
+async function sendMessages(recipientId, text) {
+  const messages = splitReplyIntoMessages(text);
+
+  for (const message of messages) {
+    await sendMessage(recipientId, message);
+  }
 }
 
 async function sendMessage(recipientId, text) {
