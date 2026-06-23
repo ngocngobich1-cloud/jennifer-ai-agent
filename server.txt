@@ -28,20 +28,27 @@ app.post("/webhook", async (req, res) => {
 
   try {
     const body = req.body;
+
     if (body.object !== "page") return;
 
     for (const entry of body.entry || []) {
       for (const event of entry.messaging || []) {
         const senderId = event.sender?.id;
+
         if (!senderId) continue;
         if (event.message?.is_echo) continue;
 
-        const userText = event.message?.text || event.postback?.payload || "";
+        const userText =
+          event.message?.text ||
+          event.postback?.payload ||
+          "";
+
         if (!userText) continue;
 
-        console.log("Khach nhan:", userText);
+        console.log("Khách nhắn:", userText);
 
         const aiReply = await getNvidiaReply(userText);
+
         await sendMessage(senderId, aiReply);
       }
     }
@@ -52,14 +59,14 @@ app.post("/webhook", async (req, res) => {
 
 async function getNvidiaReply(userText) {
   const systemPrompt = `
-Ban la tro ly tu van cua Jennifer Nail Coach.
-Nhiem vu:
-- Tra loi khach hang qua inbox fanpage.
-- Giong van than thien, ngan gon, tu nhien.
-- Khong tra loi qua dai.
-- Neu khach hoi hoc phi, lich hoc, dang ky, hay hoi them nhu cau cua khach.
-- Neu chua chac thong tin, hay noi se chuyen tu van vien ho tro them.
-- Luon xung ho lich su: chi/em hoac anh/chi tuy ngu canh.
+Bạn là trợ lý tư vấn của Jennifer Nail Coach.
+Nhiệm vụ:
+- Trả lời khách hàng qua inbox fanpage.
+- Giọng văn thân thiện, ngắn gọn, tự nhiên.
+- Không trả lời quá dài.
+- Nếu khách hỏi học phí, lịch học, đăng ký, hãy hỏi thêm nhu cầu của khách.
+- Nếu chưa chắc thông tin, hãy nói sẽ chuyển tư vấn viên hỗ trợ thêm.
+- Luôn xưng hô lịch sự: chị/em hoặc anh/chị tùy ngữ cảnh.
 `;
 
   const response = await axios.post(
@@ -81,7 +88,7 @@ Nhiem vu:
     }
   );
 
-  return response.data.choices?.[0]?.message?.content || "Em da nhan duoc tin nhan a.";
+  return response.data.choices?.[0]?.message?.content || "Em đã nhận được tin nhắn ạ.";
 }
 
 async function sendMessage(recipientId, text) {
@@ -93,7 +100,7 @@ async function sendMessage(recipientId, text) {
     }
   );
 
-  console.log("Da gui tra loi:", text);
+  console.log("Đã gửi trả lời:", text);
 }
 
 const PORT = process.env.PORT || 3001;
